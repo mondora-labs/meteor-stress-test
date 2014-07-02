@@ -16,6 +16,8 @@ var responseTimes = {};
 var avgResponseTimes = {};
 var promises = {};
 
+var start = Date.now();
+var end;
 belt.forEach(function (ast, index) {
 
 	var connectedDeferred = Q.defer();
@@ -92,36 +94,34 @@ Q.all(promises.connected).then(function () {
 	console.log("All clients connected");
 
 	Q.all([
-		
-		Q.all(promises.allUsersSub).then(function () {
-			var sum = responseTimes.allUsersSub.reduce(function (prev, cur) {
-				return prev + cur;
-			}, 0);
-			avgResponseTimes.allUsersSub = sum / STRESS_LEVEL;
-		}),
 
-		Q.all(promises.configurationsSub).then(function () {
-			var sum = responseTimes.configurationsSub.reduce(function (prev, cur) {
-				return prev + cur;
-			}, 0);
-			avgResponseTimes.configurationsSub = sum / STRESS_LEVEL;
-		}),
-
-		Q.all(promises.postOneSub).then(function () {
-			var sum = responseTimes.postOneSub.reduce(function (prev, cur) {
-				return prev + cur;
-			}, 0);
-			avgResponseTimes.postOneSub = sum / STRESS_LEVEL;
-		}),
-
-		Q.all(promises.postTwoSub).then(function () {
-			var sum = responseTimes.postTwoSub.reduce(function (prev, cur) {
-				return prev + cur;
-			}, 0);
-			avgResponseTimes.postTwoSub = sum / STRESS_LEVEL;
-		})
+		Q.all(promises.allUsersSub),
+		Q.all(promises.configurationsSub),
+		Q.all(promises.postOneSub),
+		Q.all(promises.postTwoSub)
 
 	]).then(function () {
+
+		end = Date.now();
+
+		// Get average response times
+		avgResponseTimes.allUsersSub = responseTimes.allUsersSub.reduce(function (prev, cur) {
+			return prev + cur;
+		}, 0) / STRESS_LEVEL;
+
+		avgResponseTimes.configurationsSub = responseTimes.configurationsSub.reduce(function (prev, cur) {
+			return prev + cur;
+		}, 0) / STRESS_LEVEL;
+
+		avgResponseTimes.postOneSub = responseTimes.postOneSub.reduce(function (prev, cur) {
+			return prev + cur;
+		}, 0) / STRESS_LEVEL;
+
+		avgResponseTimes.postTwoSub = responseTimes.postTwoSub.reduce(function (prev, cur) {
+			return prev + cur;
+		}, 0) / STRESS_LEVEL;
+
+	}).then(function () {
 
 		var cats = belt.map(function (ast) {
 			var users = ast.createCollection("users").reactiveQuery({}).result;
@@ -148,6 +148,7 @@ Q.all(promises.connected).then(function () {
 		}
 
 		var str = JSON.stringify(avgResponseTimes, null, 4);
+		console.log("Time span: " + (end - start) + "ms");
 		console.log("Average response times: ");
 		console.log(str);
 		fs.writeFileSync("avgResponseTimes.json", str, "utf8");
