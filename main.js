@@ -152,6 +152,7 @@ Q.all(promises.connected).then(function () {
 		console.log(str);
 		fs.writeFileSync("avgResponseTimes.json", str, "utf8");
 		fs.writeFileSync("cats.json", JSON.stringify(cats, null, 4), "utf8");
+		fs.writeFileSync("sums.json", JSON.stringify(sums, null, 4), "utf8");
 		process.exit(0);
 	});
 
