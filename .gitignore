@@ -5,3 +5,5 @@ ddp.js
 sonar-project.properties
 .idea/
 .sonar/
+avgResponseTimes.json
+cats.json

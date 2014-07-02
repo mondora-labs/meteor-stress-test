@@ -1,8 +1,10 @@
 var Asteroid = require("asteroid");
 var Q = require("q");
 var fs = require("fs");
+var crypto = require("crypto");
 
-var STRESS_LEVEL = 50;
+var STRESS_LEVEL = process.argv[2] || 10;
+console.log("Stress level: " + STRESS_LEVEL);
 
 var belt = [];
 
@@ -87,7 +89,7 @@ belt.forEach(function (ast, index) {
 });
 
 Q.all(promises.connected).then(function () {
-	console.log("All connected");
+	console.log("All clients connected");
 
 	Q.all([
 		
@@ -120,9 +122,37 @@ Q.all(promises.connected).then(function () {
 		})
 
 	]).then(function () {
+
+		var cats = belt.map(function (ast) {
+			var users = ast.createCollection("users").reactiveQuery({}).result;
+			var configurations = ast.createCollection("configurations").reactiveQuery({}).result;
+			var posts = ast.createCollection("posts").reactiveQuery({}).result;
+			return {
+				users: users,
+				configurations: configurations,
+				posts: posts
+			};
+		});
+
+		var sums = cats.map(function (cat) {
+			return crypto.createHash("md5").update(JSON.stringify(cat, null, 4)).digest("hex");
+		});
+		var allEqual = sums.reduce(function (prev, curr) {
+			return prev && curr === sums[0];
+		}, true);
+
+		if (allEqual) {
+			console.log("All requests ended successfully");
+		} else {
+			console.log("Errors occurred");
+		}
+
 		var str = JSON.stringify(avgResponseTimes, null, 4);
+		console.log("Average response times: ");
 		console.log(str);
-		fs.writeFileSync("avgResponseTimes.json", "utf8");
+		fs.writeFileSync("avgResponseTimes.json", str, "utf8");
+		fs.writeFileSync("cats.json", JSON.stringify(cats, null, 4), "utf8");
+		process.exit(0);
 	});
 
 });
